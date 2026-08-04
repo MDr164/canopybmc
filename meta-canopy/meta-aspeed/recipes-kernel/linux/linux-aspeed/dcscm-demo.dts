@@ -1,0 +1,148 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ * Canopy AST2700 DC-SCM demo device tree.
+ *
+ * Builds on the in-tree ASPEED DCSCM reference device tree and layers the
+ * Canopy demo-specific tweaks needed to showcase:
+ *   - host power toggle (x86-power-control)
+ *   - host BIOS boot from the on-card SPI0 flash (BMC hands the bus to host)
+ *   - PMBus power supply monitoring
+ *
+ * NOTE: values marked "PLACEHOLDER" must be adjusted to the real DC-SCM demo
+ * box wiring (GPIO lines, PMBus address) before hardware bring-up.
+ *
+ * This follows the ASPEED convention of #include-ing the base board .dts and
+ * then overriding nodes (see ast2700-dcscm-mctp-socket.dts). Do not add a
+ * second /dts-v1/; or dt-bindings includes here; the base DTS provides them.
+ */
+
+#include "ast2700-dcscm.dts"
+
+/ {
+	model = "Canopy AST2700 DC-SCM demo";
+};
+
+/*
+ * Power control line names.
+ *
+ * The demo box does host power control with two direct BMC GPIOs instead of the
+ * stock DCSCM PFR/LTPI/SGPIO path:
+ *
+ *   PS_ON   - DC-SCI B47 (NCSI_CPU0_SCM_HPM_TXD1) -> BMC GPIOU1 (gpio1 line 161)
+ *             Held HIGH the whole time the host is on; enables the main PSU.
+ *             Active high.
+ *   PWR_BTN - DC-SCI B43 (NCSI_CPU0_50M_CLK_HPM_OUT) -> BMC GPIOT0 (gpio1 line 152)
+ *             Pulsed LOW to press the host power button. Active low.
+ *
+ * These NCSI pins are free as GPIO: MAC1/RMII1 and the SGPIO master are disabled
+ * in the base DCSCM DT (only mac0/rgmii0 is enabled), so GPIOT0/GPIOU1 default to
+ * GPIO function.
+ *
+ * gpio-line-names is a single (monolithic) property, so overriding it replaces
+ * the base &gpio1 names wholesale. The array below therefore mirrors the base
+ * ast2700-dcscm.dts &gpio1 names verbatim and only adds T0 (PWR_BTN) and U1
+ * (PS_ON). Keep this array in sync with the base if the base names change.
+ */
+&gpio1 {
+	/*
+	 * Drive the two demo power GPIOs at 3.3V instead of the 1.8V default.
+	 *
+	 * The goldfinger NCSI/HPM signals sit in the DC-SCI 3.3V bank, so the BMC
+	 * must output 3.3V for reliable levels (1.8V is marginal there). On AST2700
+	 * the IO voltage is a per-group SCU bit (SCU4A0), not per-pin:
+	 *   - GPIOT0 (D19) -> whole GPIOT0..T7 group to 3.3V (T1..T7 unused here).
+	 *   - GPIOU1 (D7)  -> whole GPIOU0..U7 group to 3.3V, which also moves
+	 *     GPIOU5 = SCM_PHY_RST to 3.3V (fine: the AN8801R PHY is a 3.3V part).
+	 *
+	 * pinctrl-0 is replaced wholesale, so the base i3c pinconf nodes are
+	 * re-listed here alongside the new 3.3V node.
+	 */
+	pinctrl-0 = <&pinctrl_i3c0_3_hv_voltage
+		     &pinctrl_i3c0_driving &pinctrl_i3c1_driving
+		     &pinctrl_i3c2_driving &pinctrl_i3c3_driving
+		     &pinctrl_dcscm_pwr_gpio_3v3>;
+	pinctrl-names = "default";
+
+	gpio-line-names =
+		/*A0-A7*/ "","","","","","","","",
+		/*B0-B7*/ "","","","","","","","",
+		/*C0-C7*/ "","","","","","","","",
+		/*D0-D7*/ "","","","","","","","",
+		/*E0-E7*/ "","","","","FP_LED_STATUS_GREEN_CPLD_N","FP_LED_STATUS_AMBER_CPLD_N","","",
+		/*F0-F7*/ "","","","","","","","",
+		/*G0-G7*/ "","","","","","","","",
+		/*H0-H7*/ "","","","","","","","",
+		/*I0-I7*/ "","","","","","","","",
+		/*J0-J7*/ "","","","","","","","",
+		/*K0-K7*/ "","","","","","","","",
+		/*L0-L7*/ "","","","","","","","",
+		/*M0-M7*/ "","","","","","","","",
+		/*N0-N7*/ "","","","","","","","",
+		/*O0-O7*/ "","","","","","","","",
+		/*P0-P7*/ "","","","","","","","",
+		/*Q0-Q7*/ "","","","","","","","",
+		/*R0-R7*/ "","","","","","","","",
+		/*S0-S7*/ "","","","","","","","",
+		/*T0-T7*/ "FP_PWR_BTN_OUT_N","","","","","","","",
+		/*U0-U7*/ "","PS_PWR_ON","","","","SCM_PHY_RST","","",
+		/*V0-V7*/ "","","","","","","","",
+		/*W0-W7*/ "","","","","","","","",
+		/*X0-X7*/ "","","","","","","","",
+		/*Y0-Y7*/ "","","","","IRQ_PMBUS1_ALERT_LVC3_N","FM_NVME_LVC3_ALERT_N","","",
+		/*Z0-Z7*/ "","","FM_NODE_ID0_N","FM_NODE_ID1_N","","PWRGD_AUX_PWRGD_PFR_CPU0","PWRGD_AUX_PWRGD_PFR_CPU1","",
+		/*AA0-AA7*/ "BMC_BOOT_DONE","","","","","","","",
+		/*AB0-AB7*/ "","","","","","","","",
+		/*AC0-AC7*/ "","","","","","","","",
+		/*AD0-AD7*/ "","","","","","","","",
+		/*AE0-AE7*/ "","","","","","","","";
+};
+
+/* 3.3V IO voltage for the two demo power GPIOs (see &gpio1 comment above). */
+&pinctrl1 {
+	pinctrl_dcscm_pwr_gpio_3v3: dcscm-pwr-gpio-3v3 {
+		pins = "D19", "D7";	/* GPIOT0 = PWR_BTN, GPIOU1 = PS_ON */
+		power-source = <3300>;
+	};
+};
+
+/*
+ * Quiesce eSPI for the bare power-toggle demo.
+ *
+ * The base DCSCM DT enables &espi0 (with vw-pltrst-monitor, perif/OOB/flash DMA,
+ * MMBI, etc.), which expects the normal PFR/LTPI-sequenced host bring-up. In this
+ * demo we drive PS_ON directly, so when main power comes up the host eSPI
+ * reset/virtual-wire line toggles with nothing servicing it and the controller
+ * storms interrupts (observed: IRQ 71 "14c05000.espi" ~360k in 5s -> softirq
+ * soft-lockup panic).
+ *
+ * This demo talks to the host over LPC KCS (phosphor-ipmi-kcs), not eSPI, so
+ * eSPI is unused here. Disable it to stop the storm. Re-enable (and add proper
+ * eSPI reset handling) when host eSPI comms are actually needed.
+ */
+&espi0 {
+	status = "disabled";
+};
+
+/*
+ * Host BIOS SPI (SPI0) hand-off.
+ *
+ * The host is wired to the DC-SCM connector SPI0 bus directly. For the demo the
+ * BMC only needs to toggle the correct flash select and expose the SPI0 bus to
+ * the host. That select is a GPIO toggled from userspace (see the dcscm-demo
+ * showcase scripts, to be added).
+ *
+ * PLACEHOLDER: set the real controller + offset + line name for the SPI0
+ * host hand-off select on the demo box.
+ */
+
+/*
+ * PMBus power supply.
+ *
+ * A PMBus PSU is present in the demo box on one of the SCM PMBus segments
+ * (&i2c0 SMB_PMBUS1_SCM or &i2c1 SMB_PMBUS2_SCM). Its sensors are surfaced via
+ * dbus-sensors (psusensor) + entity-manager; no kernel hwmon binding is
+ * required. Left as a comment intentionally.
+ *
+ * PLACEHOLDER: if a kernel PMBus hwmon device is desired instead of psusensor,
+ * add the node under the correct &i2cN with the real address.
+ */

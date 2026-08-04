@@ -3,3 +3,6 @@ customrc
 *.sw?
 .repo/
 .vscode/
+
+# debugging
+reference/

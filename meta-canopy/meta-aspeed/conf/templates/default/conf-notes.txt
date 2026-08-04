@@ -1,0 +1,14 @@
+Common targets are:
+
+     obmc-phosphor-image: Includes OpenBMC Phosphor userspace and Web UI
+
+!!IMPORTANT!!
+
+You're building the Canopy AST2700 DC-SCM demo target (dcscm-demo).
+
+This target pulls the ASPEED AST2700 BSP (TF-A, OP-TEE, Zephyr SSP/TSP/
+bootMCU, u-boot-aspeed-sdk, linux-aspeed) from vendor/meta-aspeed-sdk
+(vendored) and the vendor/meta-zephyr submodule. Make sure both are present
+before building (see vendor/README.md).
+
+Demo images are unsigned (ASPEED secure image generation disabled).
