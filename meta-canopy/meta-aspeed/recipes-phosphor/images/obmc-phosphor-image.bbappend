@@ -16,3 +16,12 @@ IMAGE_INSTALL:remove = " \
     packagegroup-oss-intel-pmci \
     packagegroup-oss-extended \
     "
+
+# Canopy demo-mode toggle (fake inventory/sensors + console boot-log replay).
+# Opt-in at runtime via 'canopy-demo on'; see recipes-canopy/canopy-demo. This
+# pulls in obmc-console and socat (RDEPENDS) which the demo SOL console needs.
+IMAGE_INSTALL:append = " canopy-demo"
+
+# dcscm-power: bring-up helper to toggle the two demo power GPIOs directly.
+# Installs /usr/bin/dcscm-power; see recipes-canopy/dcscm-power.
+IMAGE_INSTALL:append = " dcscm-power"

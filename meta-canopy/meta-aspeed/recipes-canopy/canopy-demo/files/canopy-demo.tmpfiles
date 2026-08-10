@@ -1,0 +1,8 @@
+# Enable Canopy demo mode by default on the dcscm-demo image.
+#
+# The demo systemd units are ConditionPathExists-gated on this flag; creating it
+# here (re-created every boot by systemd-tmpfiles) makes demo mode active out of
+# the box. 'canopy-demo off' removes the flag and disables the units, so a
+# disabled state still survives a reboot.
+d /var/lib/canopy-demo 0755 root root -
+f /var/lib/canopy-demo/enabled 0644 root root -

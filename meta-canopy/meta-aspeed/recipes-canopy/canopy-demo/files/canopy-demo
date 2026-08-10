@@ -1,0 +1,65 @@
+#!/bin/sh
+# canopy-demo - toggle Canopy demo mode on the AST2700 DC-SCM demo target.
+#
+# Demo mode injects fake-but-plausible data so the product can be shown off even
+# when the host cannot be brought up (no FRU EEPROM, flaky power-on, no real
+# sensors):
+#
+#   * canopy-demo-mock     publishes fake system/chassis inventory + a handful of
+#                          live sensors on D-Bus, so the WebUI dashboard and
+#                          Redfish show useful data.
+#   * canopy-demo-console  replays a pre-recorded host boot log onto the SOL
+#                          console, so the WebUI serial/KVM window looks alive.
+#
+# The state is a persistent flag file so demo mode survives reboots. The units
+# in canopy-demo.target are ConditionPathExists-gated on the same flag.
+#
+# Usage:
+#   canopy-demo on       # enable demo mode now and on every boot
+#   canopy-demo off      # disable demo mode now and on every boot
+#   canopy-demo status   # show demo-mode state and unit status
+set -u
+
+FLAG_DIR="/var/lib/canopy-demo"
+FLAG="${FLAG_DIR}/enabled"
+TARGET="canopy-demo.target"
+SERVICES="canopy-demo-mock.service canopy-demo-console.service"
+
+cmd_on() {
+	mkdir -p "${FLAG_DIR}"
+	: >"${FLAG}"
+	# Enable the target so demo mode comes back after reboot (the units are
+	# PartOf/WantedBy the target and ConditionPathExists-gated on the flag), and
+	# start the units now.
+	systemctl enable "${TARGET}" 2>/dev/null || true
+	# shellcheck disable=SC2086
+	systemctl start ${SERVICES}
+	echo "canopy-demo: ON"
+}
+
+cmd_off() {
+	rm -f "${FLAG}"
+	# shellcheck disable=SC2086
+	systemctl stop ${SERVICES} 2>/dev/null || true
+	systemctl disable "${TARGET}" 2>/dev/null || true
+	echo "canopy-demo: OFF"
+}
+
+cmd_status() {
+	if [ -e "${FLAG}" ]; then
+		echo "demo mode : ENABLED (${FLAG})"
+	else
+		echo "demo mode : disabled"
+	fi
+	for unit in canopy-demo-mock.service canopy-demo-console.service; do
+		printf '%-28s: %s\n' "${unit}" \
+			"$(systemctl is-active "${unit}" 2>/dev/null || true)"
+	done
+}
+
+case "${1:-}" in
+	on)     cmd_on ;;
+	off)    cmd_off ;;
+	status) cmd_status ;;
+	*)      echo "usage: ${0##*/} {on|off|status}" >&2; exit 1 ;;
+esac

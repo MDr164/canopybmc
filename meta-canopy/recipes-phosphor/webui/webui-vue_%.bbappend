@@ -19,6 +19,23 @@ SRC_URI:append = " \
     file://0001-firmware-add-update-target-dropdown-to-form.patch \
     "
 
+# Canopy demo UI mode.
+#
+# When CANOPY_WEBUI_DEMO = "1", the built WebUI serves hardcoded Redfish data
+# from a mock axios adapter (src/env/demo) and auto-authenticates, so the
+# dashboard shows a plausible Canopy server with no BMC/FRU/host at all. It also
+# gains a "Settings > Demo mode" toggle to turn it off/on at runtime (the choice
+# persists in the browser and reloads the UI). Demo mode is ON by default in the
+# image env (VITE_DEMO_MODE=true, set in do_configure:append below).
+#
+# Leave "0" for real images: then the hooks/demo sources are not overlaid at all,
+# so production builds and behaviour are byte-for-byte unaffected. The dcscm-demo
+# machine sets this to "1" (see conf/machine/dcscm-demo.conf).
+#
+# The same sources drive the local dev preview (meta-canopy/scripts/webui-demo.sh).
+CANOPY_WEBUI_DEMO ?= "0"
+SRC_URI:append = " ${@' file://0002-webui-add-canopy-demo-ui-mode-hooks.patch' if d.getVar('CANOPY_WEBUI_DEMO') == '1' else ''}"
+
 # Resolve the overlay directory at parse time
 CANOPY_WEBUI_OVERLAYS := "${THISDIR}/${BPN}"
 
@@ -36,4 +53,25 @@ do_configure:prepend() {
 
     install -d ${S}/public
     install -m 0644 ${CANOPY_WEBUI_OVERLAYS}/favicon.ico ${S}/public/favicon.ico
+}
+
+# Overlay the demo UI mode sources and switch demo mode ON by default, only when
+# enabled. The 0002 patch (added to SRC_URI above) wires src/env/demo and the
+# Settings > Demo mode page into the app; the appended VITE_DEMO_MODE makes it
+# the default (the Settings toggle can still turn it off per browser).
+do_configure:append() {
+    if [ "${CANOPY_WEBUI_DEMO}" = "1" ]; then
+        install -d ${S}/src/env/demo
+        install -m 0644 ${CANOPY_WEBUI_OVERLAYS}/demo/config.js ${S}/src/env/demo/config.js
+        install -m 0644 ${CANOPY_WEBUI_OVERLAYS}/demo/demoData.js ${S}/src/env/demo/demoData.js
+        install -m 0644 ${CANOPY_WEBUI_OVERLAYS}/demo/mockAdapter.js ${S}/src/env/demo/mockAdapter.js
+        install -m 0644 ${CANOPY_WEBUI_OVERLAYS}/demo/initDemoMode.js ${S}/src/env/demo/initDemoMode.js
+
+        install -d ${S}/src/views/Settings/DemoMode
+        install -m 0644 ${CANOPY_WEBUI_OVERLAYS}/demo-views/Settings/DemoMode/DemoMode.vue ${S}/src/views/Settings/DemoMode/DemoMode.vue
+        install -m 0644 ${CANOPY_WEBUI_OVERLAYS}/demo-views/Settings/DemoMode/index.js ${S}/src/views/Settings/DemoMode/index.js
+
+        # Demo mode on by default (Settings > Demo mode can still toggle it off).
+        echo "VITE_DEMO_MODE=true" >> ${S}/.env.production
+    fi
 }

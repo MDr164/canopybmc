@@ -1,0 +1,14 @@
+[Unit]
+Description=Canopy demo mock inventory and sensors
+ConditionPathExists=/var/lib/canopy-demo/enabled
+PartOf=canopy-demo.target
+After=xyz.openbmc_project.ObjectMapper.service
+Wants=xyz.openbmc_project.ObjectMapper.service
+
+[Service]
+ExecStart=/usr/bin/canopy-demo-mock
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=canopy-demo.target

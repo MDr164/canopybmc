@@ -1,0 +1,108 @@
+From: Canopy <demo@canopy>
+Date: Mon, 10 Aug 2026 00:00:00 +0000
+Subject: [PATCH] webui: add Canopy demo UI mode + Settings toggle
+
+Wire the Canopy demo UI mode into the app:
+
+ * store/api.js  - install a mock axios adapter that answers from hardcoded
+   Redfish data (src/env/demo) when demo mode is enabled.
+ * main.js       - seed an authenticated session before mount so the
+   dashboard is shown with no BMC and no login.
+ * router/routes.js + AppNavigation - add a Settings > Demo mode page that
+   toggles demo mode (persisted in localStorage) and reloads the UI.
+
+The demo sources live in src/env/demo and src/views/Settings/DemoMode.
+
+Upstream-Status: Inappropriate [Canopy demo-only feature]
+---
+diff --git a/src/components/AppNavigation/AppNavigationMixin.js b/src/components/AppNavigation/AppNavigationMixin.js
+index dc9e050..01f9b47 100644
+--- a/src/components/AppNavigation/AppNavigationMixin.js
++++ b/src/components/AppNavigation/AppNavigationMixin.js
+@@ -146,6 +146,12 @@ const AppNavigationMixin = {
+               label: i18n.global.t('appNavigation.snmpAlerts'),
+               route: '/settings/snmp-alerts',
+             },
++            {
++              // Canopy demo UI mode toggle.
++              id: 'demo-mode',
++              label: 'Demo mode',
++              route: '/settings/demo-mode',
++            },
+           ],
+         },
+         {
+diff --git a/src/main.js b/src/main.js
+index 16f30bc..7881c3f 100644
+--- a/src/main.js
++++ b/src/main.js
+@@ -14,6 +14,7 @@ import { format } from 'date-fns-tz';
+ import store from './store';
+ import eventBus from './eventBus';
+ import { ToastPlugin } from './plugins/toast';
++import initDemoMode from './env/demo/initDemoMode';
+ 
+ import {
+   BButton,
+@@ -213,4 +214,8 @@ const filter = {
+ };
+ app.config.globalProperties.$filters = filter;
+ 
++// Canopy demo UI mode: seed an authenticated session before mount so the app
++// lands on the dashboard with hardcoded data (no login, no backend).
++initDemoMode(store);
++
+ app.mount('#app');
+diff --git a/src/router/routes.js b/src/router/routes.js
+index f3f6f6b..abd9533 100644
+--- a/src/router/routes.js
++++ b/src/router/routes.js
+@@ -2,6 +2,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
+ import ChangePassword from '@/views/ChangePassword';
+ import ConsoleLayout from '@/layouts/ConsoleLayout.vue';
+ import DateTime from '@/views/Settings/DateTime';
++import DemoMode from '@/views/Settings/DemoMode';
+ import EventLogs from '@/views/Logs/EventLogs';
+ import FactoryReset from '@/views/Operations/FactoryReset';
+ import Firmware from '@/views/Operations/Firmware';
+@@ -201,6 +202,15 @@ const routes = [
+           title: i18n.global.t('appPageTitle.dateTime'),
+         },
+       },
++      {
++        // Canopy demo UI mode toggle (see views/Settings/DemoMode).
++        path: '/settings/demo-mode',
++        name: 'demo-mode',
++        component: DemoMode,
++        meta: {
++          title: 'Demo mode',
++        },
++      },
+       {
+         path: '/settings/snmp-alerts',
+         name: 'snmp-alerts',
+diff --git a/src/store/api.js b/src/store/api.js
+index db14e26..a93a11a 100644
+--- a/src/store/api.js
++++ b/src/store/api.js
+@@ -3,6 +3,8 @@ import router from '../router';
+ import { setupCache, buildWebStorage } from 'axios-cache-interceptor';
+ import { toRaw } from 'vue';
+ import Cookies from 'js-cookie';
++import { isDemoMode } from '@/env/demo/config';
++import mockAdapter from '@/env/demo/mockAdapter';
+ 
+ //Do not change store import.
+ //Exact match alias set to support
+@@ -22,6 +24,11 @@ const axiosInstance = Axios.create({
+   withCredentials: true,
+ });
+ 
++// Canopy demo UI mode: answer every request from hardcoded data, no BMC.
++if (isDemoMode) {
++  axiosInstance.defaults.adapter = mockAdapter;
++}
++
+ const api = setupCache(axiosInstance, {
+   debug: import.meta.env.DEV ? console.log : undefined,
+   methods: ['get'],

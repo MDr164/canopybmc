@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
 # dcscm-power.sh - minimal host power control for the Canopy AST2700 DC-SCM demo.
 #
 # Drives the two demo power GPIOs directly, with no x86-power-control daemon.
@@ -13,10 +14,10 @@
 # so no gpiochip/offset numbers are hardcoded here.
 #
 # Usage:
-#   dcscm-power.sh on       # assert PS_ON (held) + pulse power button -> boot
-#   dcscm-power.sh off      # release PS_ON            -> main power cut (hard off)
-#   dcscm-power.sh press    # pulse the power button only (e.g. soft on/off)
-#   dcscm-power.sh status   # show PS_ON hold state + resolved chip/line
+#   dcscm-power on       # assert PS_ON (held) + pulse power button -> boot
+#   dcscm-power off      # release PS_ON            -> main power cut (hard off)
+#   dcscm-power press    # pulse the power button only (e.g. soft on/off)
+#   dcscm-power status   # show PS_ON hold state + resolved chip/line
 #
 # Requires libgpiod v1 CLI tools (gpioinfo, gpioset) from libgpiod-tools.
 set -u

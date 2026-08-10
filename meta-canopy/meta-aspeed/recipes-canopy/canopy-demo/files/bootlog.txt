@@ -1,0 +1,76 @@
+
+=== Canopy DC-SCM demo host console (pre-recorded) ===
+
+ROM version: F0.06
+Booting from primary flash...
+DDR5 training: channel 0/1/2/3 ... OK
+DRAM: 512 GiB (ECC enabled)
+Caliptra: measured boot OK, PCR extended
+BMC hand-off complete, releasing host SPI0
+
+UEFI firmware (EDK2), revision 2.4.1 (Canopy Demo Build)
+Copyright (c) 2026 Canopy BMC Project
+
+PROGRESS CODE: V03020003 I0
+PROGRESS CODE: V03040003 I0
+Installing PPI: 8C8CE578-8A3D-4F1C-9935-896185C32DD3
+Installing PPI: 5473C07A-3DCB-4DCA-BD6F-1E9689E7349A
+DXE Core: entering dispatch...
+Loading driver at 0x0007E1C2000 EntryPoint=0x0007E1C8A10 PcRtc
+Loading driver at 0x0007E0A4000 EntryPoint=0x0007E0AB120 CpuDxe
+Loading driver at 0x0007DF31000 EntryPoint=0x0007DF39220 PciBusDxe
+Loading driver at 0x0007DE10000 EntryPoint=0x0007DE18400 SataController
+Loading driver at 0x0007DC02000 EntryPoint=0x0007DC0A100 NvmExpressDxe
+
+PciBus: Discovered PCI @[00|00|00]
+PciBus: Discovered PCI @[16|00|00]  Vendor=1000 Device=00E2  RAID
+PciBus: Discovered PCI @[41|00|00]  Vendor=15B3 Device=1021  Network
+PciBus: Discovered PCI @[C1|00|00]  Vendor=144D Device=A80A  NVMe
+PciBus: Discovered PCI @[C2|00|00]  Vendor=144D Device=A80A  NVMe
+
+Processor: 2 x Canopy Demo CPU @ 3.20 GHz, 64 cores / 128 threads each
+Memory:    512 GiB DDR5-5600 (16 x 32 GiB RDIMM)
+Microcode: rev 0x2b000190 loaded on all packages
+
+Initializing SATA controller ... 0 devices
+Initializing NVMe controller [C1:00.0] ...
+  Namespace 1: SAMSUNG MZWLO1T9 1.92 TB  /dev/nvme0n1
+Initializing NVMe controller [C2:00.0] ...
+  Namespace 1: SAMSUNG MZWLO1T9 1.92 TB  /dev/nvme1n1
+
+Network: Mellanox ConnectX-6 (2 x 25 GbE) up
+  PXEv6 disabled, PXEv4 idle
+Secure Boot: enabled (db/dbx loaded)
+TPM 2.0: present, PCRs extended
+
+Press [F9] System Utilities  [F11] Boot Menu  [F12] Network Boot
+Boot Device: UEFI SAMSUNG MZWLO1T9 (NVMe)
+
+Loading Boot0001 "canopy-linux" ...
+GNU GRUB  version 2.12
+
+Booting `Canopy Demo Linux 6.12'
+
+[    0.000000] Linux version 6.12.0-canopy (oe@builder) (gcc 14.2.0) #1 SMP
+[    0.000000] Command line: ro root=UUID=6f1c-... console=ttyS0,115200n8
+[    0.000000] efi: EFI v2.9 by EDK II
+[    0.000000] ACPI: Early table checksum verification disabled
+[    0.041233] smpboot: Allowing 256 CPUs, 0 hotplug CPUs
+[    0.052117] Memory: 535822144K/536870912K available
+[    0.088401] rcu: Hierarchical RCU implementation.
+[    0.142509] Console: colour dummy device 80x25
+[    0.203994] pci 0000:c1:00.0: nvme: enabling device
+[    0.318772] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x2e2
+[    0.501233] EXT4-fs (nvme0n1p2): mounted filesystem with ordered data mode
+[    0.640918] systemd[1]: systemd 255 running in system mode
+[    0.712004] systemd[1]: Detected architecture x86-64.
+[  OK  ] Reached target Local File Systems.
+[  OK  ] Started Journal Service.
+[  OK  ] Reached target Network.
+[  OK  ] Started OpenSSH server daemon.
+[  OK  ] Started Canopy Demo Workload.
+[  OK  ] Reached target Multi-User System.
+
+Canopy Demo Linux 6.12  canopy-demo-host  ttyS0
+
+canopy-demo-host login:

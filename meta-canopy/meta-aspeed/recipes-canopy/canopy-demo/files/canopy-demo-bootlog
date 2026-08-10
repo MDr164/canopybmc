@@ -1,0 +1,33 @@
+#!/bin/sh
+# canopy-demo-bootlog - replay a pre-recorded host boot log to stdout, forever.
+#
+# Used by canopy-demo-console.service, whose socat pipes this script's stdout
+# into the PTY the demo obmc-console server reads, so the WebUI SOL window shows
+# a plausible, continuously-running host boot.
+#
+# The log is a plain text file (one console line per line). Pacing is applied
+# per line to look like a real serial console rather than a paste; a longer
+# pause and a restart banner separate loops. Override timing via env:
+#   LINE_DELAY  per-line delay in seconds   (default 0.06)
+#   LOOP_PAUSE  pause between loops, seconds (default 8)
+set -u
+
+LOG="${BOOTLOG_FILE:-/usr/share/canopy-demo/bootlog.txt}"
+LINE_DELAY="${LINE_DELAY:-0.06}"
+LOOP_PAUSE="${LOOP_PAUSE:-8}"
+CR="$(printf '\r')"
+
+if [ ! -r "${LOG}" ]; then
+	printf 'canopy-demo: boot log %s not found%s\n' "${LOG}" "${CR}"
+	exit 1
+fi
+
+while :; do
+	# Serial consoles expect CRLF line endings.
+	while IFS= read -r line; do
+		printf '%s%s\n' "${line}" "${CR}"
+		sleep "${LINE_DELAY}" 2>/dev/null || sleep 1
+	done <"${LOG}"
+	sleep "${LOOP_PAUSE}" 2>/dev/null || sleep 8
+	printf '%s[ canopy-demo: replaying boot log ]%s\n' "${CR}" "${CR}"
+done

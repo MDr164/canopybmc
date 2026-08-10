@@ -1,0 +1,8 @@
+[Unit]
+Description=Canopy demo mode (fake inventory, sensors and console replay)
+# Pulls in the demo units. Enabling this target enables demo mode on boot;
+# each unit is additionally ConditionPathExists-gated on the demo flag.
+Wants=canopy-demo-mock.service canopy-demo-console.service
+
+[Install]
+WantedBy=multi-user.target

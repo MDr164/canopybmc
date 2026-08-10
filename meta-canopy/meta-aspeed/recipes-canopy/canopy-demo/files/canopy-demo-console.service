@@ -1,0 +1,22 @@
+[Unit]
+Description=Canopy demo console boot-log replay
+ConditionPathExists=/var/lib/canopy-demo/enabled
+PartOf=canopy-demo.target
+# obmc-console-server for the demo console is started once the PTY exists (see
+# ExecStartPost) and stopped with us; its unit is otherwise skipped at boot
+# because /dev/ttyDEMO does not exist (see the drop-in Condition).
+Before=obmc-console@ttyDEMO.service
+
+[Service]
+# socat creates a PTY, symlinks it to the device the demo obmc-console server
+# reads (server.ttyDEMO.conf: local-tty = ttyDEMO), and pipes the boot-log
+# replay into it. The replay loops forever, so the SOL window always shows a
+# plausible boot.
+ExecStart=/usr/bin/socat -u EXEC:/usr/bin/canopy-demo-bootlog PTY,link=/dev/ttyDEMO,raw,echo=0,b115200,perm=0666
+ExecStartPost=/bin/sh -c 'for i in 1 2 3 4 5 6 7 8 9 10; do [ -e /dev/ttyDEMO ] && break; sleep 0.3; done; systemctl start obmc-console@ttyDEMO.service'
+ExecStopPost=-/bin/systemctl stop obmc-console@ttyDEMO.service
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=canopy-demo.target
