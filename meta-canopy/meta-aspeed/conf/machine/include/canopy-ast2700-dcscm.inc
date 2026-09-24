@@ -32,9 +32,3 @@ VIRTUAL-RUNTIME_obmc-fan-presence = ""
 EXTRA_IMAGEDEPENDS:append = " \
     aspeed-image-recoveryuart \
     "
-
-# Keep Canopy userspace without vendor userspace or core-image overlays.
-BBMASK += "vendor/meta-aspeed-sdk/.*recipes-phosphor/.*\.bbappend"
-BBMASK += "vendor/meta-aspeed-sdk/.*recipes-graphics/.*\.bbappend"
-
-BBMASK += "vendor/meta-aspeed-sdk/.*recipes-core/images/obmc-phosphor-image\.bbappend$"

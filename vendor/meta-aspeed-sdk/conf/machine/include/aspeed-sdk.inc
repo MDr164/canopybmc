@@ -9,7 +9,7 @@ KERNEL_IMAGETYPE ?= "zImage"
 KERNEL_IMAGETYPE:aarch64 ?= "Image"
 KERNEL_IMAGETYPES:aarch64 ?= "Image"
 KERNEL_CLASSES ?= "kernel-fit-extra-artifacts"
-INITRAMFS_IMAGE ?= "aspeed-image-initramfs"
+INITRAMFS_IMAGE ?= "obmc-phosphor-initramfs"
 INITRAMFS_FSTYPES ?= "cpio.xz"
 
 WKS_FILE ?= "ast2600-emmc.wks.in"
