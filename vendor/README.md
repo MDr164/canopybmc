@@ -5,12 +5,13 @@ submodule.
 
 ## meta-aspeed-sdk
 
-Trimmed copy of the ASPEED OpenBMC SDK.
+AST2700 A1/A2 BSP subset of the ASPEED OpenBMC SDK. Retains the firmware
+boot chain, image generation and runtime integration; omits vendor application
+bundles, benchmarks, emulator recipes and signing assets for other SoCs.
 
 - Source: https://github.com/AspeedTech-BMC/openbmc
 - Commit: `59db970dc4ed772070580a18b4c6774029d32110`
 - Subtree: `meta-aspeed-sdk/`
-- Excluded: `meta-aspeed-pfr/`, `meta-ast2500-sdk/`, `meta-ast2600-sdk/`, `meta-vendor/`.
 
 ## meta-zephyr
 
